@@ -14,9 +14,9 @@ This project focuses on implementing a proper DevOps workflow rather than buildi
 
 Tech Stack:
 
-Backend – Python (Flask)
+Backend – FastAPI
 
-Frontend – HTML, CSS
+Frontend – Streamlit
 
 SCM – Git \& GitHub
 
@@ -24,7 +24,7 @@ CI/CD – GitHub Actions
 
 Containerization – Docker
 
-Database – MySQL (optional)
+Database – MySQL
 
 
 
