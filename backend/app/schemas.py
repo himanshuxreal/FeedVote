@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, EmailStr, validator
+from pydantic import BaseModel, Field, EmailStr, field_validator, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 
@@ -18,8 +18,7 @@ class User(UserBase):
     """User schema"""
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FeedbackBase(BaseModel):
@@ -27,13 +26,15 @@ class FeedbackBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     description: str = Field(..., min_length=1)
 
-    @validator('title')
+    @field_validator('title')
+    @classmethod
     def title_not_empty(cls, v):
         if not v or not v.strip():
             raise ValueError('Title cannot be empty or whitespace only')
         return v.strip()
 
-    @validator('description')
+    @field_validator('description')
+    @classmethod
     def description_not_empty(cls, v):
         if not v or not v.strip():
             raise ValueError('Description cannot be empty or whitespace only')
@@ -52,8 +53,7 @@ class Feedback(FeedbackBase):
     created_at: datetime
     vote_count: Optional[int] = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class VoteBase(BaseModel):
@@ -73,8 +73,7 @@ class Vote(VoteBase):
     id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FeedbackWithVotes(Feedback):
@@ -93,5 +92,4 @@ class TopIdea(BaseModel):
     downvotes: int = 0
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

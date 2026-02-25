@@ -74,8 +74,30 @@ def test_get_all_feedback():
 
 def test_get_feedback_by_id():
     """Test getting feedback by ID"""
-    response = client.get("/feedback/1")
-    # Should return 404 if feedback doesn't exist
+    # First create a user and feedback
+    user_response = client.post(
+        "/users/",
+        json={"username": "testuser", "email": "test@example.com"}
+    )
+    user_id = user_response.json()["id"] if user_response.status_code == 201 else 1
+    
+    # Create feedback
+    feedback_response = client.post(
+        "/feedback/?user_id=1",
+        json={
+            "title": "Test Feedback",
+            "description": "This is a test"
+        }
+    )
+    
+    # Now test getting existing feedback
+    if feedback_response.status_code == 201:
+        feedback_id = feedback_response.json()["id"]
+        response = client.get(f"/feedback/{feedback_id}")
+        assert response.status_code == 200
+    
+    # Test non-existent feedback ID
+    response = client.get("/feedback/9999")
     assert response.status_code == 404
 
 

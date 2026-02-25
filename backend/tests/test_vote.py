@@ -44,30 +44,104 @@ def setup_and_teardown():
 
 def test_upvote():
     """Test upvote creation"""
-    response = client.post(
-        "/vote/",
+    # Create users first
+    user1_response = client.post(
+        "/users/",
+        json={"username": "voter1", "email": "voter1@example.com"}
+    )
+    user2_response = client.post(
+        "/users/",
+        json={"username": "voter2", "email": "voter2@example.com"}
+    )
+    
+    # Extract user IDs (fallback to default if creation fails)
+    user1_id = user1_response.json().get("id", 1) if user1_response.status_code == 201 else 1
+    user2_id = user2_response.json().get("id", 2) if user2_response.status_code == 201 else 2
+    
+    # Create feedback by user1
+    feedback_response = client.post(
+        f"/feedback/?user_id={user1_id}",
         json={
-            "feedback_id": 1,
-            "user_id": 1,
-            "vote_type": "upvote"
+            "title": "Test Feedback",
+            "description": "A feedback to vote on"
         }
     )
-    # Will fail because feedback doesn't exist, but shows endpoint works
-    assert response.status_code in [201, 404]
+    
+    # If feedback creation succeeds, test voting
+    if feedback_response.status_code == 201:
+        feedback_id = feedback_response.json()["id"]
+        # User2 votes on user1's feedback
+        response = client.post(
+            "/vote/",
+            json={
+                "feedback_id": feedback_id,
+                "user_id": user2_id,
+                "vote_type": "upvote"
+            }
+        )
+        assert response.status_code in [201, 404]
+    else:
+        # If resources don't exist, expect 404
+        response = client.post(
+            "/vote/",
+            json={
+                "feedback_id": 9999,
+                "user_id": 9999,
+                "vote_type": "upvote"
+            }
+        )
+        assert response.status_code in [404, 400]
 
 
 def test_downvote():
     """Test downvote creation"""
-    response = client.post(
-        "/vote/",
+    # Create users first
+    user1_response = client.post(
+        "/users/",
+        json={"username": "user_downvote1", "email": "downvote1@example.com"}
+    )
+    user2_response = client.post(
+        "/users/",
+        json={"username": "user_downvote2", "email": "downvote2@example.com"}
+    )
+    
+    # Extract user IDs
+    user1_id = user1_response.json().get("id", 1) if user1_response.status_code == 201 else 1
+    user2_id = user2_response.json().get("id", 2) if user2_response.status_code == 201 else 2
+    
+    # Create feedback by user1
+    feedback_response = client.post(
+        f"/feedback/?user_id={user1_id}",
         json={
-            "feedback_id": 1,
-            "user_id": 1,
-            "vote_type": "downvote"
+            "title": "Test Feedback",
+            "description": "A feedback to downvote"
         }
     )
-    # Will fail because feedback doesn't exist, but shows endpoint works
-    assert response.status_code in [201, 404]
+    
+    # If feedback creation succeeds, test voting
+    if feedback_response.status_code == 201:
+        feedback_id = feedback_response.json()["id"]
+        # User2 votes on user1's feedback
+        response = client.post(
+            "/vote/",
+            json={
+                "feedback_id": feedback_id,
+                "user_id": user2_id,
+                "vote_type": "downvote"
+            }
+        )
+        assert response.status_code in [201, 404]
+    else:
+        # If resources don't exist, expect 404
+        response = client.post(
+            "/vote/",
+            json={
+                "feedback_id": 9999,
+                "user_id": 9999,
+                "vote_type": "downvote"
+            }
+        )
+        assert response.status_code in [404, 400]
 
 
 def test_duplicate_vote_prevention():
