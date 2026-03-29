@@ -68,7 +68,7 @@ jobs:
 
       # Upload coverage reports
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           file: ./backend/coverage.xml
           flags: backend
@@ -315,7 +315,7 @@ jobs:
       # Upload logs as artifact
       - name: Upload service logs
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: service-logs
           path: service-logs.txt
