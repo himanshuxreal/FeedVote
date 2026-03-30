@@ -412,42 +412,359 @@ networks:
 # ⚙️ 12. GitHub Actions CI Pipeline (.github/workflows/ci.yml)
 
 ```yaml
-name: FeedVote CI Pipeline
+name: FeedVote CI/CD Pipeline
 
+# Trigger on push to main branch and pull requests
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
 
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: feedvote-backend
+  FRONTEND_IMAGE: feedvote-frontend
+
 jobs:
-  build-and-test:
+  # ====================
+  # BACKEND BUILD & TEST
+  # ====================
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    # Set defaults for backend job
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      # Clone repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better diff detection
+
+      # Setup Python environment
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      # Cache pip dependencies (speeds up CI)
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-backend-${{ hashFiles('backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-backend-
+
+      # Upgrade pip and install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Run tests with coverage
+      - name: Run tests with pytest
+        env:
+          DATABASE_URL: "sqlite:///./test.db"
+        run: |
+          pytest tests/ -v \
+            --tb=short \
+            --cov=app \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term
+
+      # Upload coverage reports
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./backend/coverage.xml
+          flags: backend
+          fail_ci_if_error: false
+
+      # Code quality check with flake8 (strict)
+      - name: Lint with flake8
+        run: |
+          # Install flake8
+          pip install flake8
+          
+          # Stop the build if there are Python syntax errors or undefined names
+          flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          
+          # Exit-zero treats all errors as warnings
+          flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        continue-on-error: false
+
+      # Static code analysis with pylint (optional)
+      - name: Analyze with pylint
+        run: |
+          pip install pylint
+          pylint app/ --exit-zero --max-line-length=127 || true
+        continue-on-error: true
+
+  # ====================
+  # FRONTEND BUILD & TEST
+  # ====================
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Cache pip dependencies (frontend)
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-frontend-${{ hashFiles('frontend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-frontend-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Check if frontend runs without errors
+      - name: Validate Streamlit app
+        run: |
+          streamlit config show
+          python -c "import streamlit; print('✓ Streamlit import successful')"
+        continue-on-error: false
+
+  # ====================
+  # SECURITY SCANNING
+  # ====================
+  security-scan:
+    name: Security Scanning
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
-      - name: Install backend dependencies
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-security-${{ hashFiles('backend/requirements.txt', 'frontend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-security-
+
+      # Bandit: Security issue scanner for Python
+      - name: Scan for security issues with Bandit
         run: |
-          cd backend
-          pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install bandit
+          bandit -r backend/app/ frontend/ -f screen -ll || true
+        continue-on-error: true
 
-      - name: Run backend tests (Pytest)
+      # Safety: Check dependencies for known vulnerabilities
+      - name: Check dependencies for vulnerabilities
         run: |
-          cd backend
-          pytest
+          pip install safety
+          safety check --json || true
+        continue-on-error: true
 
+      # Check for hardcoded secrets
+      - name: Detect secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug
+        continue-on-error: true
+
+  # ====================
+  # DOCKER BUILD
+  # ====================
+  docker-build:
+    name: Docker Build & Validation
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]  # Wait for tests to pass
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Build backend Docker image
       - name: Build backend Docker image
-        run: docker build -t feedvote-backend ./backend
+        run: |
+          echo "Building backend image..."
+          docker build \
+            --tag ${{ env.BACKEND_IMAGE }}:latest \
+            --tag ${{ env.BACKEND_IMAGE }}:${{ github.sha }} \
+            --file backend/Dockerfile \
+            ./backend
+          echo "✓ Backend image built successfully"
 
+      # Build frontend Docker image
       - name: Build frontend Docker image
-        run: docker build -t feedvote-frontend ./frontend
+        run: |
+          echo "Building frontend image..."
+          docker build \
+            --tag ${{ env.FRONTEND_IMAGE }}:latest \
+            --tag ${{ env.FRONTEND_IMAGE }}:${{ github.sha }} \
+            --file frontend/Dockerfile \
+            ./frontend
+          echo "✓ Frontend image built successfully"
+
+      # Validate Docker Compose configuration
+      - name: Validate docker-compose configuration
+        run: |
+          echo "Validating development configuration..."
+          docker-compose config > /dev/null
+          echo "✓ Development config validated"
+          
+          echo "Validating production configuration..."
+          docker-compose -f docker-compose.prod.yml config > /dev/null
+          echo "✓ Production config validated"
+
+      # Check image sizes
+      - name: Check Docker image sizes
+        run: |
+          echo "Backend image size:"
+          docker images ${{ env.BACKEND_IMAGE }} --format "table {{.Repository}}\t{{.Size}}"
+          echo ""
+          echo "Frontend image size:"
+          docker images ${{ env.FRONTEND_IMAGE }} --format "table {{.Repository}}\t{{.Size}}"
+
+  # ====================
+  # INTEGRATION TESTS
+  # ====================
+  integration-test:
+    name: Integration Tests (Docker)
+    runs-on: ubuntu-latest
+    needs: docker-build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Build images for testing
+      - name: Build Docker images
+        run: |
+          docker build -t feedvote-backend:test ./backend
+          docker build -t feedvote-frontend:test ./frontend
+
+      # Start services with Docker Compose
+      - name: Start services with Docker Compose
+        run: |
+          docker-compose up -d
+          echo "Waiting for services to be healthy..."
+          sleep 10
+
+      # Check backend health
+      - name: Verify backend health
+        run: |
+          echo "Checking backend health..."
+          for i in {1..30}; do
+            if curl -f http://localhost:8000/health; then
+              echo "✓ Backend is healthy"
+              exit 0
+            fi
+            echo "Attempt $i: Waiting for backend..."
+            sleep 2
+          done
+          echo "✗ Backend failed to start"
+          docker-compose logs backend
+          exit 1
+
+      # Check API endpoints
+      - name: Test API endpoints
+        run: |
+          echo "Testing API endpoints..."
+          
+          # Root endpoint
+          curl -f http://localhost:8000/ || exit 1
+          echo "✓ Root endpoint working"
+          
+          # Health endpoint
+          curl -f http://localhost:8000/health || exit 1
+          echo "✓ Health endpoint working"
+          
+          # API documentation
+          curl -f http://localhost:8000/docs || exit 1
+          echo "✓ API docs endpoint working"
+
+      # Cleanup
+      - name: Stop Docker services
+        if: always()
+        run: |
+          echo "Stopping services..."
+          docker-compose down -v
+          echo "✓ Services stopped and volumes removed"
+
+      # Save logs
+      - name: Save service logs
+        if: always()
+        run: |
+          docker-compose logs > service-logs.txt || true
+
+      # Upload logs as artifact
+      - name: Upload service logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: service-logs
+          path: service-logs.txt
+
+  # ====================
+  # FINAL STATUS
+  # ====================
+  status:
+    name: Build Status
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test, security-scan, docker-build, integration-test]
+    if: always()
+
+    steps:
+      - name: Check job status
+        run: |
+          if [ "${{ needs.backend-test.result }}" != "success" ]; then
+            echo "❌ Backend tests failed"
+            exit 1
+          fi
+          if [ "${{ needs.frontend-test.result }}" != "success" ]; then
+            echo "❌ Frontend validation failed"
+            exit 1
+          fi
+          if [ "${{ needs.docker-build.result }}" != "success" ]; then
+            echo "❌ Docker build failed"
+            exit 1
+          fi
+          if [ "${{ needs.integration-test.result }}" != "success" ]; then
+            echo "❌ Integration tests failed"
+            exit 1
+          fi
+          echo "✓ All checks passed!"
+
+      - name: Notify success
+        if: success()
+        run: |
+          echo "✅ Pipeline completed successfully"
+          echo "Commit: ${{ github.sha }}"
+          echo "Branch: ${{ github.ref }}"
 ```
 
 ### Pipeline Details:
