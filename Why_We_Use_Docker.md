@@ -147,7 +147,7 @@ Docker makes this possible because:
 │                                                     │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────┐ │
 │  │  Frontend    │  │   Backend    │  │Database  │ │
-│  │ (Streamlit)  │  │  (FastAPI)   │  │(Postgres)│ │
+│  │ (Streamlit)  │  │  (FastAPI)   │  │( SQLite )│ │
 │  │  Container   │  │  Container   │  │Container │ │
 │  └──────────────┘  └──────────────┘  └──────────┘ │
 │       Port 8501      Port 8000         Port 5432   │
