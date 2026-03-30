@@ -1,6 +1,6 @@
-# 📌 FeedVote
+# 📌 FeedVote (Feedback and Voting)
 
-### DevOps-Based Feedback & Voting Web Application
+### DevOps-Based Feedback & Voting Web Application (Module) 
 
 ---
 
