@@ -40,7 +40,7 @@ jobs:
 
       # Cache pip dependencies (speeds up CI)
       - name: Cache pip dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-backend-${{ hashFiles('backend/requirements.txt') }}
@@ -115,7 +115,7 @@ jobs:
           python-version: "3.10"
 
       - name: Cache pip dependencies (frontend)
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-frontend-${{ hashFiles('frontend/requirements.txt') }}
@@ -151,7 +151,7 @@ jobs:
           python-version: "3.10"
 
       - name: Cache pip dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-security-${{ hashFiles('backend/requirements.txt', 'frontend/requirements.txt') }}
