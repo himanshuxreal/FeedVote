@@ -177,8 +177,8 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
+          base: ${{ github.event.before || github.base_ref }}
+          head: ${{ github.event.after || github.head_ref || 'HEAD' }}
           extra_args: --debug
         continue-on-error: true
 
