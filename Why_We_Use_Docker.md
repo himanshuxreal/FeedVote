@@ -35,7 +35,7 @@ Docker **solves this** by making sure your program runs **exactly the same way e
 The FeedVote project has **three main parts**:
 1. **Backend** (Python API) — handles data and logic
 2. **Frontend** (Streamlit app) — what users see
-3. **Database** (PostgreSQL) — stores information
+3. **Database** (SQLite) — stores information
 
 Without Docker, you'd need to:
 - Install Python on your computer
@@ -80,7 +80,7 @@ With Docker:
 
 Without Docker:
 - Install Python
-- Install PostgreSQL database
+- Install SQLite database
 - Install Node.js
 - Install 50+ libraries
 - Read docs to figure out configurations
@@ -194,7 +194,7 @@ In the FeedVote project:
 **docker-compose.yml** is like an **instruction manual** that says:
 - "Build the backend container from its Dockerfile"
 - "Build the frontend container from its Dockerfile"
-- "Also run a PostgreSQL database container"
+- "Also run a SQLite database container"
 - "Make them talk to each other"
 - "Use these settings and passwords"
 
