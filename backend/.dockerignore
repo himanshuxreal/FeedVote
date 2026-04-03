@@ -35,6 +35,8 @@ coverage.xml
 htmlcov/
 test.db
 test_vote.db
+*.db
+*.sqlite3
 
 # Documentation
 docs/
