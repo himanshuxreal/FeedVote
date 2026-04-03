@@ -55,8 +55,8 @@ USER appuser
 EXPOSE 8501
 
 # Health check (Streamlit)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')" || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=40s \
+  CMD curl -f http://localhost:8501/_stcore/health || exit 1
 
 # Run application
 CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
