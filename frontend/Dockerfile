@@ -66,7 +66,7 @@ EXPOSE 8501
 
 # Health check - file-based check (Streamlit doesn't expose standard health endpoint)
 # Check if Streamlit process is running and frontend is ready
-HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
+HEALTHCHECK --interval=10s --timeout=5s --start-period=500s --retries=3 \
     CMD (test -f /tmp/frontend-ready && curl -sf http://localhost:8501/) || exit 1
 
 # Run application via startup script
