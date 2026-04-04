@@ -4,8 +4,20 @@ name: FeedVote CI/CD Pipeline
 on:
   push:
     branches: [ main ]
+    # Skip pipeline if ONLY these files changed
+    paths-ignore:
+      - '**.md'                    # All markdown files (README.md, etc.)
+      - '.gitignore'               # Git configuration
+      - 'LICENSE'                  # License file
+      - '.editorconfig'             # Editor settings
   pull_request:
     branches: [ main ]
+    # Skip pipeline if ONLY these files changed
+    paths-ignore:
+      - '**.md'                    # All markdown files (README.md, etc.)
+      - '.gitignore'               # Git configuration
+      - 'LICENSE'                  # License file
+      - '.editorconfig'             # Editor settings
 
 env:
   REGISTRY: ghcr.io
