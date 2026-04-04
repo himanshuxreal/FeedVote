@@ -244,87 +244,132 @@ jobs:
   # INTEGRATION TESTS
   # ====================
   integration-test:
-    name: Integration Tests (Docker)
+    name: Integration Tests (Docker Compose)
     runs-on: ubuntu-latest
     needs: docker-build
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      # ADD THIS STEP
       - name: Install docker-compose
         run: |
           sudo apt-get update
           sudo apt-get install -y docker-compose
 
-      # Build images for testing
       - name: Build Docker images
         run: |
           docker build -t feedvote-backend:test ./backend
           docker build -t feedvote-frontend:test ./frontend
 
-      # Start services with Docker Compose
       - name: Start services with Docker Compose
         run: |
+          echo "Starting services with Docker Compose..."
           docker-compose up -d
-          echo "Waiting for services to be healthy..."
-          sleep 10
+          echo "Services starting..."
 
-      # Check backend health
-      - name: Verify backend health
+      - name: Wait for backend to be healthy
         run: |
-          echo "Checking backend health..."
-          for i in {1..30}; do
-            if curl -f http://localhost:8000/health; then
-              echo "✓ Backend is healthy"
+          echo "Waiting for backend service to be healthy..."
+          MAX_ATTEMPTS=40
+          ATTEMPT=0
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+              echo "Backend is healthy!"
               exit 0
             fi
-            echo "Attempt $i: Waiting for backend..."
-            sleep 2
+            ATTEMPT=$((ATTEMPT + 1))
+            echo "  Attempt $ATTEMPT/$MAX_ATTEMPTS: Backend not ready yet..."
+            sleep 1
           done
-          echo "✗ Backend failed to start"
+          echo "Backend failed to start within timeout"
           docker-compose logs backend
           exit 1
 
-      # Check API endpoints
-      - name: Test API endpoints
+      - name: Wait for frontend to be healthy
         run: |
-          echo "Testing API endpoints..."
+          echo "Waiting for frontend service to be healthy..."
+          MAX_ATTEMPTS=40
+          ATTEMPT=0
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            # Check if frontend process is running and responding
+            if test -f /tmp/frontend-ready 2>/dev/null && curl -sf http://localhost:8501/ > /dev/null 2>&1; then
+              echo "Frontend is healthy!"
+              exit 0
+            fi
+            ATTEMPT=$((ATTEMPT + 1))
+            echo "  Attempt $ATTEMPT/$MAX_ATTEMPTS: Frontend not ready yet..."
+            sleep 1
+          done
+          echo "Frontend failed to start within timeout"
+          docker-compose logs frontend
+          exit 1
+
+      - name: Verify all services are running
+        run: |
+          echo "Checking docker-compose status..."
+          docker-compose ps
+          echo ""
+          echo "Health status:"
+          docker-compose ps | grep -E "(backend|frontend)" | grep -i "healthy" || echo "Some services may not be fully healthy"
+
+      - name: Test backend API endpoints
+        run: |
+          echo "Testing backend API endpoints..."
           
           # Root endpoint
-          curl -f http://localhost:8000/ || exit 1
-          echo "✓ Root endpoint working"
+          echo "  Testing root endpoint..."
+          curl -sf http://localhost:8000/ || exit 1
+          echo "  Root endpoint working"
           
           # Health endpoint
-          curl -f http://localhost:8000/health || exit 1
-          echo "✓ Health endpoint working"
+          echo "  Testing health endpoint..."
+          curl -sf http://localhost:8000/health || exit 1
+          echo "  Health endpoint working"
           
           # API documentation
-          curl -f http://localhost:8000/docs || exit 1
-          echo "✓ API docs endpoint working"
+          echo "  Testing API docs..."
+          curl -sf http://localhost:8000/docs || exit 1
+          echo "  API docs endpoint working"
 
-      # Cleanup
+      - name: Test frontend accessibility
+        run: |
+          echo "Testing frontend accessibility..."
+          
+          # Basic page load test
+          echo "  Testing frontend page load..."
+          RESPONSE=$(curl -sf http://localhost:8501/)
+          if echo "$RESPONSE" | grep -q "streamlit"; then
+            echo "  Frontend is serving HTML"
+          else
+            echo "  Frontend response doesn't contain streamlit marker"
+            echo "  Response preview: $(echo "$RESPONSE" | head -c 200)..."
+          fi
+
+      - name: Collect service logs before cleanup
+        if: always()
+        run: |
+          echo "Collecting service logs..."
+          mkdir -p /tmp/service-logs
+          docker-compose logs backend > /tmp/service-logs/backend.log 2>&1 || true
+          docker-compose logs frontend > /tmp/service-logs/frontend.log 2>&1 || true
+          docker-compose logs > /tmp/service-logs/all-services.log 2>&1 || true
+
       - name: Stop Docker services
         if: always()
         run: |
           echo "Stopping services..."
-          docker-compose down -v
-          echo "✓ Services stopped and volumes removed"
+          docker-compose down -v 2>&1 || true
+          echo "Services stopped and volumes cleaned"
 
-      # Save logs
-      - name: Save service logs
-        if: always()
-        run: |
-          docker-compose logs > service-logs.txt || true
-
-      # Upload logs as artifact
       - name: Upload service logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: service-logs
-          path: service-logs.txt
+          name: docker-compose-logs
+          path: /tmp/service-logs/
+          retention-days: 7
 
   # ====================
   # FINAL STATUS
@@ -339,26 +384,26 @@ jobs:
       - name: Check job status
         run: |
           if [ "${{ needs.backend-test.result }}" != "success" ]; then
-            echo "❌ Backend tests failed"
+            echo "Backend tests failed"
             exit 1
           fi
           if [ "${{ needs.frontend-test.result }}" != "success" ]; then
-            echo "❌ Frontend validation failed"
+            echo "Frontend validation failed"
             exit 1
           fi
           if [ "${{ needs.docker-build.result }}" != "success" ]; then
-            echo "❌ Docker build failed"
+            echo "Docker build failed"
             exit 1
           fi
           if [ "${{ needs.integration-test.result }}" != "success" ]; then
-            echo "❌ Integration tests failed"
+            echo "Integration tests failed"
             exit 1
           fi
-          echo "✓ All checks passed!"
+          echo "All checks passed!"
 
       - name: Notify success
         if: success()
         run: |
-          echo "✅ Pipeline completed successfully"
+          echo "Pipeline completed successfully"
           echo "Commit: ${{ github.sha }}"
           echo "Branch: ${{ github.ref }}"

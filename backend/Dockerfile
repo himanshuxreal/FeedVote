@@ -12,15 +12,18 @@ WORKDIR /app
 # Set environment variables
 # PYTHONDONTWRITEBYTECODE: Don't create .pyc files
 # PYTHONUNBUFFERED: Don't buffer stdout/stderr
+# DATABASE_URL: Use temp directory for SQLite, override with MYSQL for prod
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    ENVIRONMENT=development \
+    DATABASE_URL="sqlite:////tmp/feedvote.db"
 
 # Create non-root user for security (don't run as root)
 RUN useradd -m -u 1000 appuser && \
-    mkdir -p /app && \
-    chown -R appuser:appuser /app
+    mkdir -p /app /tmp && \
+    chown -R appuser:appuser /app /tmp
 
 # Install system dependencies (minimal set)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -37,15 +40,19 @@ RUN pip install --upgrade pip setuptools wheel && \
 # Copy application code
 COPY --chown=appuser:appuser . .
 
+# Copy and make startup script executable
+COPY --chown=appuser:appuser startup.sh /app/startup.sh
+RUN chmod +x /app/startup.sh
+
 # Switch to non-root user
 USER appuser
 
 # Expose port
 EXPOSE 8000
 
-# Health check (important for orchestration)
+# Health check - check if backend is responding
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
-# Run application with uvicorn
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run startup script
+CMD ["/app/startup.sh"]

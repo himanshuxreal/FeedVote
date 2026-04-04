@@ -5,44 +5,70 @@ services:
     build: ./backend
     container_name: feedvote-backend
     environment:
-      DATABASE_URL: "sqlite:///./feedvote.db"
+      # Use temporary SQLite database for development
+      # Override with MYSQL env var for production
+      ENVIRONMENT: development
+      DATABASE_URL: "sqlite:////tmp/feedvote.db"
     ports:
       - "8000:8000"
     volumes:
+      # Mount app code for live reloading
       - ./backend:/app
+      # Create a temporary volume for SQLite database (survives container restart)
+      - backend_data:/tmp
     networks:
       - feedvote-network
     restart: unless-stopped
+    # Healthcheck configuration (proper interval for dev)
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 40s
+      start_period: 30s
+    # Wait for container to start before health checks
+    # No explicit depends_on needed - backend doesn't depend on anything
 
   frontend:
     build: ./frontend
     container_name: feedvote-frontend
-    depends_on:
-      backend:
-        condition: service_healthy
     environment:
       BACKEND_URL: "http://backend:8000"
     ports:
       - "8501:8501"
     volumes:
+      # Mount app code for live reloading
       - ./frontend:/app
+      # Separate volume for Streamlit cache to avoid conflicts
+      - frontend_cache:/home/appuser/.streamlit
     networks:
       - feedvote-network
     restart: unless-stopped
+    # CRITICAL: depends_on with condition ensures backend is healthy
+    depends_on:
+      backend:
+        condition: service_healthy
+    # Use stricter healthcheck for Streamlit
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
-      interval: 30s
-      timeout: 10s
+      test: 
+        - CMD
+        - bash
+        - -c
+        - "test -f /tmp/frontend-ready && curl -sf http://localhost:8501/ > /dev/null"
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 40s
+      start_period: 35s
 
 networks:
   feedvote-network:
     driver: bridge
+
+volumes:
+  # SQLite database storage for backend (temporary)
+  backend_data:
+    driver: local
+  # Streamlit cache and config storage
+  frontend_cache:
+    driver: local
 
