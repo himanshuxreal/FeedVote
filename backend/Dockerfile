@@ -51,7 +51,7 @@ USER appuser
 EXPOSE 8000
 
 # Health check - check if backend is responding
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=500s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Run startup script
