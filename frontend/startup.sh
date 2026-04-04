@@ -24,15 +24,29 @@ for i in $(seq 1 $MAX_RETRIES); do
     fi
 done
 
-# Create a readiness file
-mkdir -p /tmp
-touch /tmp/frontend-ready
-echo "✓ Frontend ready marker created"
-
-# Start Streamlit with health endpoint
+# Start Streamlit in the background
 echo "🚀 Starting Streamlit application..."
-exec streamlit run app.py \
+streamlit run app.py \
     --server.port=8501 \
     --server.address=0.0.0.0 \
     --server.headless=true \
-    --logger.level=info
+    --logger.level=info &
+
+STREAMLIT_PID=$!
+
+# Wait for Streamlit to actually start responding
+echo "⏳ Waiting for Streamlit to be responsive..."
+for i in $(seq 1 $MAX_RETRIES); do
+    if curl -sf http://localhost:8501/ >/dev/null 2>&1; then
+        echo "✓ Streamlit is responsive!"
+        mkdir -p /tmp
+        touch /tmp/frontend-ready
+        echo "✓ Frontend ready marker created"
+        break
+    fi
+    echo "  Attempt $i/$MAX_RETRIES: Streamlit not responsive yet..."
+    sleep $RETRY_INTERVAL
+done
+
+# Keep container running
+wait $STREAMLIT_PID
