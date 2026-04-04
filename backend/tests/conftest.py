@@ -10,6 +10,7 @@ This conftest.py file provides:
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -20,10 +21,12 @@ from app.database import Base, get_db
 # Using in-memory SQLite for fast, isolated tests without file system dependency
 TEST_DATABASE_URL = "sqlite:///:memory:"
 
-# Create test engine
+# Create test engine with StaticPool to persist in-memory database across connections
+# This is required for in-memory SQLite databases
 engine = create_engine(
     TEST_DATABASE_URL,
-    connect_args={"check_same_thread": False}
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool
 )
 
 # Create test session factory
