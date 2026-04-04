@@ -58,7 +58,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 35s
+      start_period: 500s
 
 networks:
   feedvote-network:
