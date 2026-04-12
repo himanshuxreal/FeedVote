@@ -5,11 +5,9 @@ services:
     build: ./backend
     container_name: feedvote-backend
     environment:
-      DATABASE_URL: "sqlite:///:memory:"
+      DATABASE_URL: "sqlite:///./feedvote.db"
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend:/app
     networks:
       - feedvote-network
     restart: unless-stopped
@@ -30,8 +28,6 @@ services:
       BACKEND_URL: "http://backend:8000"
     ports:
       - "8501:8501"
-    volumes:
-      - ./frontend:/app
     networks:
       - feedvote-network
     restart: unless-stopped
