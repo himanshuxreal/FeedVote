@@ -3,7 +3,7 @@ name: FeedVote CI/CD Pipeline
 # Trigger on push to main branch and pull requests
 on:
   push:
-    branches: [ main ]
+    branches: [ feature ]
     # Skip pipeline if ONLY these files changed
     paths-ignore:
       - '**.md'                    # All markdown files (README.md, etc.)
@@ -11,7 +11,7 @@ on:
       - 'LICENSE'                  # License file
       - '.editorconfig'             # Editor settings
   pull_request:
-    branches: [ main ]
+    branches: [ feature ]
     # Skip pipeline if ONLY these files changed
     paths-ignore:
       - '**.md'                    # All markdown files (README.md, etc.)
