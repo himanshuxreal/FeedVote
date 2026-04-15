@@ -23,6 +23,9 @@ env:
   REGISTRY: docker.io
   BACKEND_IMAGE: feedvote-backend
   FRONTEND_IMAGE: feedvote-frontend
+  PYTHON_VERSION: "3.10"
+  BACKEND_URL: "http://localhost"
+  BACKEND_PORT: 8000
 
 jobs:
   # ====================
@@ -45,10 +48,10 @@ jobs:
           fetch-depth: 0  # Full history for better diff detection
 
       # Setup Python environment
-      - name: Set up Python 3.10
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: ${{ env.PYTHON_VERSION }}
 
       # Cache pip dependencies (speeds up CI)
       - name: Cache pip dependencies
@@ -121,10 +124,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Cache pip dependencies (frontend)
         uses: actions/cache@v4
@@ -157,10 +160,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Cache pip dependencies
         uses: actions/cache@v4
@@ -284,7 +287,7 @@ jobs:
         run: |
           echo "Checking backend health..."
           for i in {1..30}; do
-            if curl -f http://localhost:8000/health; then
+            if curl -f ${{ env.BACKEND_URL }}:${{ env.BACKEND_PORT }}/health; then
               echo "✓ Backend is healthy"
               exit 0
             fi
@@ -301,15 +304,15 @@ jobs:
           echo "Testing API endpoints..."
           
           # Root endpoint
-          curl -f http://localhost:8000/ || exit 1
+          curl -f ${{ env.BACKEND_URL }}:${{ env.BACKEND_PORT }}/ || exit 1
           echo "✓ Root endpoint working"
           
           # Health endpoint
-          curl -f http://localhost:8000/health || exit 1
+          curl -f ${{ env.BACKEND_URL }}:${{ env.BACKEND_PORT }}/health || exit 1
           echo "✓ Health endpoint working"
           
           # API documentation
-          curl -f http://localhost:8000/docs || exit 1
+          curl -f ${{ env.BACKEND_URL }}:${{ env.BACKEND_PORT }}/docs || exit 1
           echo "✓ API docs endpoint working"
 
       # Cleanup
