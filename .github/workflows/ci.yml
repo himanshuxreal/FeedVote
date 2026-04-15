@@ -369,16 +369,16 @@ jobs:
       # Build and push backend image
       - name: Build and push backend Docker image
         run: |
-          docker build -t himanshuxreal/feedvote-backend:latest -t himanshuxreal/feedvote-backend:${{ github.sha }} ./backend
-          docker push himanshuxreal/feedvote-backend:latest
-          docker push himanshuxreal/feedvote-backend:${{ github.sha }}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/feedvote-backend:latest -t ${{ secrets.DOCKER_USERNAME }}/feedvote-backend:${{ github.sha }} ./backend
+          docker push ${{ secrets.DOCKER_USERNAME }}/feedvote-backend:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/feedvote-backend:${{ github.sha }}
 
       # Build and push frontend image
       - name: Build and push frontend Docker image
         run: |
-          docker build -t himanshuxreal/feedvote-frontend:latest -t himanshuxreal/feedvote-frontend:${{ github.sha }} ./frontend
-          docker push himanshuxreal/feedvote-frontend:latest
-          docker push himanshuxreal/feedvote-frontend:${{ github.sha }}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/feedvote-frontend:latest -t ${{ secrets.DOCKER_USERNAME }}/feedvote-frontend:${{ github.sha }} ./frontend
+          docker push ${{ secrets.DOCKER_USERNAME }}/feedvote-frontend:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/feedvote-frontend:${{ github.sha }}
 
       # Log out from Docker Hub
       - name: Log out from Docker Hub
@@ -392,10 +392,10 @@ jobs:
           echo "✅ Deployment completed successfully"
           echo ""
           echo "📦 Images pushed to Docker Hub:"
-          echo "   - himanshuxreal/feedvote-backend:latest"
-          echo "   - himanshuxreal/feedvote-backend:${{ github.sha }}"
-          echo "   - himanshuxreal/feedvote-frontend:latest"
-          echo "   - himanshuxreal/feedvote-frontend:${{ github.sha }}"
+          echo "   - ${{ secrets.DOCKER_USERNAME }}/feedvote-backend:latest"
+          echo "   - ${{ secrets.DOCKER_USERNAME }}/feedvote-backend:${{ github.sha }}"
+          echo "   - ${{ secrets.DOCKER_USERNAME }}/feedvote-frontend:latest"
+          echo "   - ${{ secrets.DOCKER_USERNAME }}/feedvote-frontend:${{ github.sha }}"
 
   # ====================
   # FINAL STATUS
