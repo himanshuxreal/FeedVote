@@ -118,7 +118,27 @@ FeedVote/
 └── ✅ PROJECT_STATUS.md
 ```
 
-## 🚀 CI/CD Pipeline Explanation\n\n### ✅ **Backend & Frontend Tests**\n\nThe pipeline automatically runs comprehensive tests:\n- \ud83d\udc6b Unit tests for all backend routes and CRUD operations\n- \ud83e\udd13 Frontend validation tests for Streamlit components\n- \ud83d\udcbe Database integration tests with test fixtures\n- \u26a0\ufe0f Coverage reporting to track code quality\n\n**Status:** \u2705 Both services must pass before proceeding\n\n---\n\n### 🔒 **Security Scanning**\n\nMulti-layer security validation:\n- \ud83d\udeab **Bandit** - Python code vulnerability analysis\n- \ud83d\udeab **Safety** - Dependency security checks\n- \ud83d\udeab **TruffleHog** - Secret exposure detection\n\n**Status:** \u2705 Warnings reported but don't block (baseline setup)\n\n---\n\n### 🐳 **Docker Build & Validation**\n\nContainer image creation and validation:\n- \ud83d\udd28 Build backend Docker image\n- \ud83d\udd28 Build frontend Docker image\n- ✔️ Validate `docker-compose.yml` syntax\n- \ud83d\udcc4 Check image sizes and metadata\n\n**Status:** \u2705 Must pass before integration tests\n\n---\n\n### 🔗 **Integration Testing**\n\nFull-stack testing with Docker Compose:\n- \ud83d\udc33 Spin up all services (backend, frontend, database)\n- \u23f3 Wait for health checks to pass\n- 🧪 Test API endpoints with real requests\n- \ud83d\udcda Verify data persistence\n- 🧹 Cleanup and remove volumes\n\n**Status:** \u2705 Validates complete application workflow\n\n---\n\n### 📦 **Deployment** (Main Branch Only)\n\nAutomated deployment to Docker Hub:\n- \ud83d\udc33 Push backend image with tags\n- \ud83d\udc33 Push frontend image with tags\n- 📝 Log deployment details\n- \ud83c\udf89 Ready for cloud deployment\n\n**Status:** \u2705 Triggered only on successful main branch merge"
+## 🚀 CI/CD Pipeline Explanation
+
+### ✅ Backend & Frontend Tests
+
+The pipeline runs backend and frontend tests to validate API endpoints, database operations, and user interaction flows.
+
+### 🔒 Security Scanning
+
+Security scanning checks code and dependencies for vulnerabilities and exposed secrets using tools such as Bandit, Safety, and Trufflehog.
+
+### 🐳 Docker Build & Validation
+
+Docker build validates the backend and frontend container images and ensures the application can start successfully in the container environment.
+
+### 🔗 Integration Testing
+
+Integration testing uses Docker Compose to run backend, frontend, and database services together, verifying the full workflow end to end.
+
+### 📦 Deployment
+
+The final stage pushes the validated Docker image to Docker Hub so the application is available for deployment.
 
 ## 🌿 Git Workflow Used
 
