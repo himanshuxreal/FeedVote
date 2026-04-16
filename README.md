@@ -10,58 +10,9 @@
 
 ---
 
-## 📑 Table of Contents
-
-- [Problem Statement](#-problem-statement)
-- [Key Features](#-key-features)
-- [Quick Start](#-quick-start)
-- [System Architecture](#-system-architecture)
-- [CI/CD Pipeline](#-cicd-pipeline-explanation)
-- [Git Workflow](#-git-workflow--collaboration-model)
-- [Tools & Technologies](#-tools--technologies-stack)
-- [Screenshots](#-screenshots--visual-documentation)
-- [Challenges & Solutions](#-challenges-faced--solutions)
-
----
-
 ## 🎯 Problem Statement
 
 FeedVote is a lightweight feedback and voting application for small teams and classroom projects. It simplifies idea submission, voting, and prioritization while demonstrating a complete DevOps workflow with containerization and automated CI/CD.
-
----
-
-## ✨ Key Features
-
-| Feature | Description |
-|---------|-------------|
-| 🎤 **Feedback Submission** | Users can easily submit feedback and ideas |
-| 🗳️ **Voting System** | Community-driven voting to prioritize ideas |
-| 👥 **User Management** | Simple user authentication & profiles |
-| 📊 **Real-time Updates** | Live feedback and vote counts |
-| 🔒 **Security First** | Secure API with input validation |
-| 🐳 **Containerized** | Docker & Docker Compose ready |
-| 🤖 **Automated Testing** | Full CI/CD pipeline with GitHub Actions |
-| 💾 **Data Persistence** | SQLite with Docker volume mounts |
-| 📈 **Code Coverage** | pytest with coverage reporting |
-| 🛡️ **Security Scanning** | Bandit, Safety, and TruffleHog integration |
-
----
-
-## 🚀 Quick Start
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/FeedVote.git
-cd FeedVote
-
-# Start with Docker Compose
-docker-compose up -d
-
-# Access the application
-# Frontend: http://localhost:8501
-# Backend: http://localhost:8000
-# API Docs: http://localhost:8000/docs
-```
 
 ---
 
@@ -169,47 +120,43 @@ FeedVote/
 
 ## 🚀 CI/CD Pipeline Explanation\n\n### ✅ **Backend & Frontend Tests**\n\nThe pipeline automatically runs comprehensive tests:\n- \ud83d\udc6b Unit tests for all backend routes and CRUD operations\n- \ud83e\udd13 Frontend validation tests for Streamlit components\n- \ud83d\udcbe Database integration tests with test fixtures\n- \u26a0\ufe0f Coverage reporting to track code quality\n\n**Status:** \u2705 Both services must pass before proceeding\n\n---\n\n### 🔒 **Security Scanning**\n\nMulti-layer security validation:\n- \ud83d\udeab **Bandit** - Python code vulnerability analysis\n- \ud83d\udeab **Safety** - Dependency security checks\n- \ud83d\udeab **TruffleHog** - Secret exposure detection\n\n**Status:** \u2705 Warnings reported but don't block (baseline setup)\n\n---\n\n### 🐳 **Docker Build & Validation**\n\nContainer image creation and validation:\n- \ud83d\udd28 Build backend Docker image\n- \ud83d\udd28 Build frontend Docker image\n- ✔️ Validate `docker-compose.yml` syntax\n- \ud83d\udcc4 Check image sizes and metadata\n\n**Status:** \u2705 Must pass before integration tests\n\n---\n\n### 🔗 **Integration Testing**\n\nFull-stack testing with Docker Compose:\n- \ud83d\udc33 Spin up all services (backend, frontend, database)\n- \u23f3 Wait for health checks to pass\n- 🧪 Test API endpoints with real requests\n- \ud83d\udcda Verify data persistence\n- 🧹 Cleanup and remove volumes\n\n**Status:** \u2705 Validates complete application workflow\n\n---\n\n### 📦 **Deployment** (Main Branch Only)\n\nAutomated deployment to Docker Hub:\n- \ud83d\udc33 Push backend image with tags\n- \ud83d\udc33 Push frontend image with tags\n- 📝 Log deployment details\n- \ud83c\udf89 Ready for cloud deployment\n\n**Status:** \u2705 Triggered only on successful main branch merge"
 
-## 🌿 Git Workflow & Collaboration Model
+## 🌿 Git Workflow Used
 
-The project follows a **feature branch workflow** with strict controls:
+The project follows a **feature branch workflow**. Developers create a feature branch, push changes, and open a pull request. The pull request triggers automated testing. Once tests pass, the branch is merged into main and deployment proceeds.
 
 ```
-┌─────────────────────────────────────────┐
-│      Feature Branch Workflow             │
-├─────────────────────────────────────────┤
-│                                          │
-│  1️⃣  Create feature branch              │
-│      git checkout -b feature/xyz        │
-│                                          │
-│  2️⃣  Make commits                       │
-│      git commit -m \"Add feature\"        │
-│                                          │
-│  3️⃣  Push to remote                     │
-│      git push origin feature/xyz        │
-│                                          │
-│  4️⃣  Create Pull Request                │
-│      Compare: feature/xyz → main        │
-│                                          │
-│  5️⃣  Code Review & Tests ✅            │
-│      - CI/CD pipeline runs              │
-│      - Team reviews code                │
-│                                          │
-│  6️⃣  Merge to main                      │
-│      Triggers: Deploy to Docker Hub 📦  │
-│                                          │
-│  7️⃣  Delete feature branch              │
-│      Cleanup completed                  │
-│                                          │
-└─────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│          🌿 Feature Branch Workflow                      │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  1️⃣  Developer creates feature branch                  │
+│      git checkout -b feature/new-feature               │
+│                                                          │
+│  2️⃣  Makes commits and pushes to remote                │
+│      git push origin feature/new-feature               │
+│                                                          │
+│  3️⃣  Opens Pull Request on GitHub                      │
+│      Requests code review from team                    │
+│                                                          │
+│  4️⃣  CI/CD Pipeline Runs Automatically ✅              │
+│      • Tests execute                                    │
+│      • Security scans complete                          │
+│      • Docker images build                              │
+│                                                          │
+│  5️⃣  Code Review & Approval                             │
+│      Team reviews changes                              │
+│      Feedback provided                                 │
+│                                                          │
+│  6️⃣  Merge to Main Branch                              │
+│      PR approved and merged                            │
+│      Triggers deployment 🚀                            │
+│                                                          │
+│  7️⃣  Automatic Deployment                              │
+│      Docker images pushed to Docker Hub 📦              │
+│      Application deployed                              │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
 ```
-
-### 🔒 Branch Protection Rules
-
-- ✋ Direct commits to `main` are **blocked**
-- ✋ All changes require **pull requests**
-- ✋ CI/CD must **pass** before merge
-- ✋ Code review is **required**
-- ✅ Merged branches can be **deleted** manually
 
 ## 🛠️ Tools & Technologies Stack
 
@@ -416,62 +363,3 @@ This creates a semi-automated deployment workflow where:
 This approach serves as a foundational step towards full cloud deployment in the future.
 
 ---
-
-## 📚 Documentation
-
-| Document | Purpose |
-|----------|---------|
-| [DOCKER_VOLUMES_SOLUTION.md](DOCKER_VOLUMES_SOLUTION.md) | How Docker volumes work & database persistence |
-| [VOLUME_VERIFICATION_AND_PERSISTENCE_TEST.md](VOLUME_VERIFICATION_AND_PERSISTENCE_TEST.md) | Verification & testing procedures |
-| [QUICKSTART.md](QUICKSTART.md) | Get started quickly with FeedVote |
-| [DOCKER_SETUP.md](DOCKER_SETUP.md) | Docker configuration details |
-| [PROJECT_STATUS.md](PROJECT_STATUS.md) | Current project status & roadmap |
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please follow our workflow:
-
-1. 🌿 Create a feature branch
-2. 📝 Make your changes
-3. 🧪 Run tests locally
-4. 📤 Push to remote
-5. 🔀 Create a Pull Request
-6. ✅ Wait for CI/CD to pass
-
----
-
-## 📞 Support
-
-- 📧 Open an issue on GitHub
-- 📚 Check the [documentation](./DOCUMENTATION_INDEX.md)
-- 💬 Join our discussions
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- **FastAPI** - Modern Python web framework
-- **Streamlit** - Rapid web app development
-- **Docker** - Container technology
-- **GitHub Actions** - CI/CD automation
-- **SQLite** - Lightweight database
-
----
-
-<div align="center">
-
-### 🎉 Built with ❤️ using FastAPI, Streamlit & Docker
-
-**Made with 🚀 for learning DevOps practices**
-
-[![Visitors](https://visitor-badge.laobi.icu/badge?page_id=feedvote.feedvote)](https://github.com/yourusername/FeedVote)
-
-</div>
