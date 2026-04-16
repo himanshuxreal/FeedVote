@@ -11,6 +11,9 @@ services:
     networks:
       - feedvote-network
     restart: unless-stopped
+    volumes:
+      - ./backend/data:/app/data
+      - ./backend/feedvote.db:/app/feedvote.db
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
