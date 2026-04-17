@@ -1,4 +1,4 @@
-## 🗳️ FeedVote
+﻿## 🗳️ FeedVote
 
 > *A modern feedback and voting application with complete DevOps integration*
 
@@ -325,7 +325,35 @@ The project follows a **feature branch workflow**. Developers create a feature b
 
 ---
 
-### 🔴 Challenge 6: Local vs CI/CD-Based Deployment Flow
+### 🔴 Challenge 6: Dependency Vulnerability Remediation & Optimization
+
+**Problem:** 🚫 The project had dependency vulnerabilities that reduced both security and reliability.
+
+**Root Cause:**
+- Outdated Python packages in `requirements.txt`
+- No automated dependency scanning or remediation
+- Dependency version pinning was inconsistent
+
+**Solution:** ✅
+- Enabled Dependabot to scan and open update pull requests
+- Reviewed and merged dependency updates for `streamlit`, `requests`, and supporting packages
+- Rebuilt the Docker images after each update to verify compatibility
+- Added dependency monitoring as part of regular maintenance
+
+**Outcome:** 🎉
+- 11 vulnerabilities were resolved
+- Security and stability improved
+- Future dependency issues are now caught early through automation
+
+> Initially, our project had multiple dependency vulnerabilities.
+> We used Dependabot to identify and update these libraries, which improved both security and stability of the system.
+
+![Resolved Vulnerabilities](images/vurnerability.png)
+*11 vulnerabilities fixed after Dependabot updates and rebuilds*
+
+---
+
+### 🔴 Challenge 7: Local vs CI/CD-Based Deployment Flow
 
 **Problem:** 🚫 Managing different deployment approaches for development and production.
 
