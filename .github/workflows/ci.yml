@@ -201,55 +201,47 @@ jobs:
   # DOCKER BUILD
   # ====================
   docker-build:
-    name: Docker Build & Validation
+    name: Docker Build & Package
     runs-on: ubuntu-latest
     needs: [backend-test, frontend-test]  # Wait for tests to pass
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Install docker-compose
         run: |
           sudo apt-get update
           sudo apt-get install -y docker-compose
 
-      # Build backend Docker image
       - name: Build backend Docker image
         run: |
-          echo "Building backend image..."
           docker build \
-            --tag ${{ env.BACKEND_IMAGE }}:latest \
             --tag ${{ env.BACKEND_IMAGE }}:${{ github.sha }} \
+            --tag ${{ env.BACKEND_IMAGE }}:latest \
             --file backend/Dockerfile \
             ./backend
-          echo "✓ Backend image built successfully"
 
-      # Build frontend Docker image
       - name: Build frontend Docker image
         run: |
-          echo "Building frontend image..."
           docker build \
-            --tag ${{ env.FRONTEND_IMAGE }}:latest \
             --tag ${{ env.FRONTEND_IMAGE }}:${{ github.sha }} \
+            --tag ${{ env.FRONTEND_IMAGE }}:latest \
             --file frontend/Dockerfile \
             ./frontend
-          echo "✓ Frontend image built successfully"
 
-      # Validate Docker Compose configuration
-      - name: Validate docker-compose configuration
+      - name: Save Docker image artifacts
         run: |
-          echo "Validating docker-compose configuration..."
-          docker-compose config > /dev/null
-          echo "✓ Docker Compose config validated"
+          docker save ${{ env.BACKEND_IMAGE }}:${{ github.sha }} -o backend-image.tar
+          docker save ${{ env.FRONTEND_IMAGE }}:${{ github.sha }} -o frontend-image.tar
 
-      # Check image sizes
-      - name: Check Docker image sizes
-        run: |
-          echo "Backend image size:"
-          docker images ${{ env.BACKEND_IMAGE }} --format "table {{.Repository}}\t{{.Size}}"
-          echo ""
-          echo "Frontend image size:"
-          docker images ${{ env.FRONTEND_IMAGE }} --format "table {{.Repository}}\t{{.Size}}"
+      - name: Upload Docker image artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-docker-images
+          path: |
+            backend-image.tar
+            frontend-image.tar
 
   # ====================
   # INTEGRATION TESTS
@@ -262,27 +254,33 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
-      # ADD THIS STEP
+
       - name: Install docker-compose
         run: |
           sudo apt-get update
           sudo apt-get install -y docker-compose
 
-      # Build images for testing
-      - name: Build Docker images
-        run: |
-          docker build -t feedvote-backend:test ./backend
-          docker build -t feedvote-frontend:test ./frontend
+      - name: Download built Docker images
+        uses: actions/download-artifact@v4
+        with:
+          name: built-docker-images
+          path: docker-images
 
-      # Start services with Docker Compose
-      - name: Start services with Docker Compose
+      - name: Load Docker images
         run: |
-          docker-compose up -d
+          docker load -i docker-images/backend-image.tar
+          docker load -i docker-images/frontend-image.tar
+
+      - name: Start services with Docker Compose
+        env:
+          BACKEND_IMAGE: ${{ env.BACKEND_IMAGE }}
+          FRONTEND_IMAGE: ${{ env.FRONTEND_IMAGE }}
+          BACKEND_TAG: ${{ github.sha }}
+        run: |
+          docker-compose up -d --no-build
           echo "Waiting for services to be healthy..."
           sleep 10
 
-      # Check backend health
       - name: Verify backend health
         run: |
           echo "Checking backend health..."
@@ -298,24 +296,16 @@ jobs:
           docker-compose logs backend
           exit 1
 
-      # Check API endpoints
       - name: Test API endpoints
         run: |
           echo "Testing API endpoints..."
-          
-          # Root endpoint
           curl -f ${{ env.BACKEND_URL }}:${{ env.BACKEND_PORT }}/ || exit 1
           echo "✓ Root endpoint working"
-          
-          # Health endpoint
           curl -f ${{ env.BACKEND_URL }}:${{ env.BACKEND_PORT }}/health || exit 1
           echo "✓ Health endpoint working"
-          
-          # API documentation
           curl -f ${{ env.BACKEND_URL }}:${{ env.BACKEND_PORT }}/docs || exit 1
           echo "✓ API docs endpoint working"
 
-      # Cleanup
       - name: Stop Docker services
         if: always()
         run: |
@@ -323,13 +313,11 @@ jobs:
           docker-compose down -v
           echo "✓ Services stopped and volumes removed"
 
-      # Save logs
       - name: Save service logs
         if: always()
         run: |
           docker-compose logs > service-logs.txt || true
 
-      # Upload logs as artifact
       - name: Upload service logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -351,45 +339,45 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Log in to Docker Hub using basic Docker CLI
+      - name: Install docker-compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Download built Docker images
+        uses: actions/download-artifact@v4
+        with:
+          name: built-docker-images
+          path: docker-images
+
+      - name: Load Docker images
+        run: |
+          docker load -i docker-images/backend-image.tar
+          docker load -i docker-images/frontend-image.tar
+
       - name: Log in to Docker Hub
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      # Verify Docker login was successful
-      - name: Verify Docker login
+      - name: Retag and push backend Docker image
         run: |
-          echo "Testing Docker login credentials..."
-          docker pull alpine:latest > /dev/null 2>&1
-          if [ $? -eq 0 ]; then
-            echo "✓ Docker login successful - credentials valid"
-          else
-            echo "❌ Docker login failed - invalid credentials"
-            echo "Please verify that DOCKER_USERNAME and DOCKER_PASSWORD secrets are correctly configured"
-            exit 1
-          fi
-
-      # Build and push backend image
-      - name: Build and push backend Docker image
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/feedvote-backend:latest -t ${{ secrets.DOCKER_USERNAME }}/feedvote-backend:${{ github.sha }} ./backend
+          docker tag ${{ env.BACKEND_IMAGE }}:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/feedvote-backend:latest
+          docker tag ${{ env.BACKEND_IMAGE }}:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/feedvote-backend:${{ github.sha }}
           docker push ${{ secrets.DOCKER_USERNAME }}/feedvote-backend:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/feedvote-backend:${{ github.sha }}
 
-      # Build and push frontend image
-      - name: Build and push frontend Docker image
+      - name: Retag and push frontend Docker image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/feedvote-frontend:latest -t ${{ secrets.DOCKER_USERNAME }}/feedvote-frontend:${{ github.sha }} ./frontend
+          docker tag ${{ env.FRONTEND_IMAGE }}:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/feedvote-frontend:latest
+          docker tag ${{ env.FRONTEND_IMAGE }}:${{ github.sha }} ${{ secrets.DOCKER_USERNAME }}/feedvote-frontend:${{ github.sha }}
           docker push ${{ secrets.DOCKER_USERNAME }}/feedvote-frontend:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/feedvote-frontend:${{ github.sha }}
 
-      # Log out from Docker Hub
       - name: Log out from Docker Hub
         if: always()
         run: |
           docker logout
 
-      # Deployment summary
       - name: Deployment summary
         run: |
           echo "✅ Deployment completed successfully"

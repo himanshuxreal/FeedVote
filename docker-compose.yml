@@ -2,6 +2,7 @@ version: "3.9"
 
 services:
   backend:
+    image: "${BACKEND_IMAGE:-feedvote-backend}:${BACKEND_TAG:-latest}"
     build: ./backend
     container_name: feedvote-backend
     environment:
@@ -19,6 +20,7 @@ services:
       start_period: 40s
 
   frontend:
+    image: "${FRONTEND_IMAGE:-feedvote-frontend}:${BACKEND_TAG:-latest}"
     build: ./frontend
     container_name: feedvote-frontend
     depends_on:
