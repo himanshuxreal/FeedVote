@@ -1,57 +1,57 @@
 # FeedVote - Quick Start Guide
 
-**Last Updated:** March 30, 2026  
-**Status:** ✅ Production Ready
+**Last Updated:** 18th April 2026
 
 ---
 
 ## ⚡ Get Running in 5 Minutes
 
-### Option 1: Run Without Docker (Fastest)
+### Option 1: Run Without Docker (Local Development)
 
 **Prerequisites:** Python 3.10+
 
 ```powershell
-# Terminal 1: Backend setup
+# Backend setup
 cd backend
-python -m venv venv
-.\venv\Scripts\Activate.ps1
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ```powershell
-# Terminal 2: Frontend setup
+# Frontend setup
 cd frontend
-python -m venv venv
-.\venv\Scripts\Activate.ps1
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
-**Browser will open automatically:**
+Then open in your browser:
+
 - Frontend: http://localhost:8501
 - Backend API docs: http://localhost:8000/docs
 
 ---
 
-### Option 2: Run With Docker
+### Option 2: Run With Docker Compose
 
 **Prerequisites:** Docker Desktop installed
 
 ```powershell
-# Build and start
 docker-compose build
 docker-compose up -d
+```
 
-# Access at:
-# Frontend: http://localhost:8501
-# Backend API docs: http://localhost:8000/docs
+Then open:
 
-# View logs
-docker-compose logs -f
+- Frontend: http://localhost:8501
+- Backend API docs: http://localhost:8000/docs
 
-# Stop
+To stop:
+
+```powershell
 docker-compose down
 ```
 
@@ -61,19 +61,20 @@ docker-compose down
 
 | Component | URL | Purpose |
 |-----------|-----|---------|
-| Frontend | http://localhost:8501 | Web interface for users |
-| Backend API | http://localhost:8000 | REST API server |
-| API Documentation | http://localhost:8000/docs | Interactive Swagger UI |
-| Database | backend/feedvote.db | SQLite (auto-created) |
+| Frontend | http://localhost:8501 | Streamlit user interface |
+| Backend API | http://localhost:8000 | FastAPI server |
+| API Docs | http://localhost:8000/docs | Swagger UI documentation |
+| Health Check | http://localhost:8000/health | Backend service health |
+| Database | `backend/feedvote.db` | SQLite file for local development |
 
 ---
 
-## ✨ Core Features to Test
+## ✨ Core Features to Try
 
-1. **Register:** Create a new user via the sidebar
-2. **Submit Idea:** Go to "Submit Feedback" page
-3. **Vote:** Browse ideas and vote up/down
-4. **Leaderboard:** View trending ideas in "Top Voted"
+1. Register a user from the sidebar
+2. Submit an idea or feedback entry
+3. Browse feedback and submit upvotes or downvotes
+4. View the top ideas leaderboard
 
 ---
 
@@ -81,20 +82,25 @@ docker-compose down
 
 | Issue | Solution |
 |-------|----------|
-| Port 8000 in use | `taskkill /PID <PID> /F` or use different port |
+| Port 8000 or 8501 in use | Stop the conflicting process or change ports |
 | Python not found | Install Python 3.10+ from python.org |
-| Frontend can't connect | Ensure backend runs on port 8000 first |
-| Database errors | Delete `backend/feedvote.db` and restart |
-| Docker not found | Install Docker Desktop from docker.com |
+| Backend not reachable | Confirm backend is running and `BACKEND_URL` is correct |
+| Streamlit does not start | Verify frontend dependencies with `pip install -r requirements.txt` |
+| Docker command not found | Install Docker Desktop and restart the terminal |
 
 ---
 
-## 📚 Full Documentation
+## 📚 More Documentation
 
-- **README.md** — Complete overview, architecture, and API reference
-- **DOCKER_SETUP.md** — Detailed Docker configuration and troubleshooting
-- **PROJECT_STATUS.md** — Current status, verification results, and deployment options
+- `README.md` — Overview and architecture
+- `DOCKER_SETUP.md` — Docker development instructions
+- `PROJECT_STATUS.md` — Current status and verification
+- `DOCUMENTATION_INDEX.md` — Documentation guide
 
 ---
 
-**Pick Option 1 or 2 above and start in 5 minutes!**
+## Notes
+
+- The frontend reads `BACKEND_URL` from environment variables; default is `http://localhost:8000`
+- Production or Docker Hub deployment is not included in this repository
+- Use `docker-compose` for local containerized development

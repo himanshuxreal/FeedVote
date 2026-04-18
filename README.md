@@ -122,23 +122,36 @@ FeedVote/
 
 ### ✅ Backend & Frontend Tests
 
-The pipeline runs backend and frontend tests to validate API endpoints, database operations, and user interaction flows.
+The pipeline runs two separate jobs: `backend-test` and `frontend-test`.
+- `backend-test` installs backend dependencies, runs `pytest` with `sqlite:///:memory:` and generates coverage reports.
+- `frontend-test` installs frontend dependencies, validates Streamlit, and confirms the frontend can import successfully.
 
 ### 🔒 Security Scanning
 
-Security scanning checks code and dependencies for vulnerabilities and exposed secrets using tools such as Bandit, Safety, and Trufflehog.
+The `security-scan` job inspects code and dependencies using Bandit, Safety, and TruffleHog.
+- Bandit checks Python code for security issues.
+- Safety scans installed packages for known vulnerabilities.
+- TruffleHog detects secrets in the repository history.
 
-### 🐳 Docker Build & Validation
+### 🐳 Docker Build & Package
 
-Docker build validates the backend and frontend container images and ensures the application can start successfully in the container environment.
+The `docker-build` job builds both backend and frontend Docker images.
+- It tags images with `latest` and the current commit SHA.
+- It saves the built images as tar artifacts.
+- These artifacts are uploaded so later jobs can reuse the exact same images without rebuilding.
 
 ### 🔗 Integration Testing
 
-Integration testing uses Docker Compose to run backend, frontend, and database services together, verifying the full workflow end to end.
+The `integration-test` job downloads the saved Docker image artifacts, loads them, and starts services with Docker Compose.
+- It verifies the backend health endpoint and basic API endpoints.
+- It records logs and uploads them when the test run completes.
 
 ### 📦 Deployment
 
-The final stage pushes the validated Docker image to Docker Hub so the application is available for deployment.
+The `deploy` job runs only on `main` after integration tests succeed.
+- It downloads and loads the same Docker image artifacts produced earlier.
+- It logs in to Docker Hub with repository secrets.
+- It retags and pushes backend and frontend images as both `latest` and the current commit SHA.
 
 ## 🌿 Git Workflow Used
 
