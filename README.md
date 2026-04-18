@@ -107,8 +107,7 @@ FeedVote/
 │
 ├── 📚 Documentation
 │   ├── README.md
-│   ├── DOCKER_VOLUMES_SOLUTION.md
-│   ├── VOLUME_VERIFICATION_AND_PERSISTENCE_TEST.md
+│   ├── DOCUMENTATION_INDEX.md
 │   ├── QUICKSTART.md
 │   ├── DOCKER_SETUP.md
 │   └── PROJECT_STATUS.md
